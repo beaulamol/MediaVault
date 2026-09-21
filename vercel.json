@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://mediavault.onrender.com/api/:path*"
+      "destination": "https://mediavault-8ue6.onrender.com/api/:path*"
     }
   ]
 }
