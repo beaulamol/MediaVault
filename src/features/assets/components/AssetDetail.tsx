@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { getAsset, thumbnailUrl, updateAsset } from '@/api/client';
+import { useEffect, useRef, useState } from 'react';
+import { ApiError, getAsset, thumbnailUrl, updateAsset } from '@/api/client';
 import { formatBytes, formatDate, formatDuration, statusLabel } from '@/lib/format';
 import type { Asset, AssetStatus } from '@/lib/types';
 
@@ -19,13 +19,22 @@ export function AssetDetail({ id, onClose, onSaved }: Props) {
   const [asset, setAsset] = useState<Asset | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const panelRef = useRef<HTMLElement>(null);
+  const opener = useRef<HTMLElement | null>(document.activeElement as HTMLElement | null);
 
   useEffect(() => {
+    opener.current = document.activeElement as HTMLElement | null;
+    panelRef.current?.focus();
+    const controller = new AbortController();
     setAsset(null);
     setError(null);
-    getAsset(id)
+    getAsset(id, controller.signal)
       .then(setAsset)
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Load failed'));
+      .catch((err: unknown) => {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        setError(err instanceof Error ? err.message : 'Load failed');
+      });
+    return () => controller.abort();
   }, [id]);
 
   async function setStatus(status: AssetStatus) {
@@ -37,14 +46,24 @@ export function AssetDetail({ id, onClose, onSaved }: Props) {
       setAsset(updated);
       onSaved(updated);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed');
+      if (err instanceof ApiError && err.code === 'version_conflict') {
+        try {
+          const latest = await getAsset(asset.id);
+          setAsset(latest);
+          setError('This asset changed elsewhere. The latest version is loaded; review it before saving again.');
+        } catch {
+          setError('This asset changed elsewhere, and the latest version could not be loaded.');
+        }
+      } else {
+        setError(err instanceof Error ? err.message : 'Save failed');
+      }
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <aside className="panel">
+    <aside className="panel" ref={panelRef} tabIndex={-1} aria-label="Asset details" onKeyDown={(event) => { if (event.key === 'Escape') onClose(); }}>
       <div className="panel__head">
         <h2>Asset detail</h2>
         <button onClick={onClose}>Close</button>
