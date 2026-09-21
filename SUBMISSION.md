@@ -4,6 +4,12 @@ Keep this tight. Bullet points are fine. We read this before we read your code,
 and a clear account of your reasoning carries real weight — including where you
 chose not to do something.
 
+## Diployed Links
+
+[Front-End](https://mediavault-zeta.vercel.app/)
+[Back-end](https://mediavault-8ue6.onrender.com)
+
+
 ## Video walkthrough
 
 Paste your Loom (or equivalent) link here. 5–10 minutes.
