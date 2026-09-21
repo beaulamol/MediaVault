@@ -1,18 +1,20 @@
 import { memo } from "react";
 import type { AssetQuery } from "@/lib/types";
 
-const SORTS: Array<{ value: NonNullable<AssetQuery["sort"]>; label: string }> = [
-  { value: "updatedAt:desc", label: "Recently updated" },
-  { value: "name:asc", label: "Name A–Z" },
-  { value: "sizeBytes:desc", label: "Largest first" },
-  { value: "createdAt:desc", label: "Newest" },
-];
+const SORTS: Array<{ value: NonNullable<AssetQuery["sort"]>; label: string }> =
+  [
+    { value: "updatedAt:desc", label: "Recently updated" },
+    { value: "name:asc", label: "Name A–Z" },
+    { value: "sizeBytes:desc", label: "Largest first" },
+    { value: "createdAt:desc", label: "Newest" },
+  ];
 
 export interface HeaderProps {
   q: string;
   sort: NonNullable<AssetQuery["sort"]>;
   onQueryChange: (value: string) => void;
   onSortChange: (value: NonNullable<AssetQuery["sort"]>) => void;
+  onHome: () => void;
 }
 
 export const Header = memo(function Header({
@@ -20,10 +22,15 @@ export const Header = memo(function Header({
   sort,
   onQueryChange,
   onSortChange,
+  onHome,
 }: HeaderProps) {
   return (
     <header className="topbar">
-      <h1>MediaVault</h1>
+      <h1>
+        <button type="button" className="brand-button" onClick={onHome}>
+          MediaVault
+        </button>
+      </h1>
       <input
         className="search"
         type="search"

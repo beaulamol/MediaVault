@@ -28,6 +28,16 @@ h1 {
   font-size: 18px;
   margin: 0;
 }
+.brand-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: inherit;
+}
+.brand-button:hover:not(:disabled) {
+  background: transparent;
+}
 h2 {
   font-size: 16px;
   margin: 0;

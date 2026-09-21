@@ -102,7 +102,7 @@ export function AssetPage() {
     if (status.length) params.set("status", status.join(","));
     if (kind.length) params.set("kind", kind.join(","));
     if (tag) params.set("tag", tag);
-    params.set("sort", sort);
+    if (sort !== "updatedAt:desc") params.set("sort", sort);
     const search = params.toString();
     const nextUrl = `${location.pathname}${search ? `?${search}` : ""}${location.hash}`;
     if (nextUrl !== `${location.pathname}${location.search}${location.hash}`) {
@@ -201,9 +201,35 @@ export function AssetPage() {
         ?.focus();
     });
   }, []);
+  const goHome = useCallback(() => {
+    setQ("");
+    setStatus([]);
+    setKind([]);
+    setTag("");
+    setSort("updatedAt:desc");
+    setSelectedIds(new Set());
+    setActiveId(null);
+    setNotice(null);
+    const params = new URLSearchParams(location.search);
+    for (const name of ["q", "status", "kind", "tag", "sort"]) {
+      params.delete(name);
+    }
+    const search = params.toString();
+    history.replaceState(
+      history.state,
+      "",
+      `${location.pathname}${search ? `?${search}` : ""}${location.hash}`,
+    );
+  }, []);
   return (
     <div className="app">
-      <Header q={q} sort={sort} onQueryChange={setQ} onSortChange={setSort} />
+      <Header
+        q={q}
+        sort={sort}
+        onQueryChange={setQ}
+        onSortChange={setSort}
+        onHome={goHome}
+      />
       <div className="filters">
         <Filters
           status={status}
