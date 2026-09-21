@@ -37,7 +37,7 @@ Create a new **Web Service** in the Render dashboard.
 The server already reads Render's assigned `PORT` environment variable, falling back to `8787` for local development. No change to `server/` is required. After deployment, verify:
 
 ```text
-https://mediavault.onrender.com/api/health
+https://mediavault-8ue6.onrender.com/api/health
 ```
 
 The response should report `ok: true`. Keep the Render service URL exactly as `https://mediavault-8ue6.onrender.com`, or update the destination in `vercel.json` if Render assigns a different URL.
@@ -65,7 +65,7 @@ If the Render URL changes, update the `destination` in the committed `vercel.jso
 ```json
 {
   "source": "/api/:path*",
-  "destination": "https://YOUR-RENDER-SERVICE.onrender.com/api/:path*"
+  "destination": "https://mediavault-8ue6.onrender.com/api/:path*"
 }
 ```
 
