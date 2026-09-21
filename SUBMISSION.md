@@ -10,7 +10,7 @@ Paste your Loom (or equivalent) link here. 5–10 minutes.
 
 **Link:**
 
----
+[Loom URL](https://www.loom.com/share/70103a8ff31a4e5b86952de6c7782be5)
 
 ## How to run it
 
@@ -18,7 +18,8 @@ Anything we need to know beyond `npm install && npm run dev`.
 
 ## Time spent
 
-Approx. 5 days elapsed since the initial commit; actual hands-on coding time was not tracked separately.
+Approximately 10–12 hours, mostly on Sunday, including preparing the submission.
+
 
 ---
 
