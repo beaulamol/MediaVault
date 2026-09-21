@@ -5,7 +5,7 @@ This project uses one GitHub repository with two services:
 - Render Free Web Service: runs the existing Node API.
 - Vercel Hobby: builds and hosts the Vite frontend.
 
-The frontend calls relative `/api/...` URLs. `vercel.json` forwards those requests to `https://mediavault.onrender.com/api/...`, so the browser does not call localhost or the Render domain directly.
+The frontend calls relative `/api/...` URLs. `vercel.json` forwards those requests to `https://mediavault-8ue6.onrender.com/api/...`, so the browser does not call localhost or the Render domain directly.
 
 ## Commit These Files
 
@@ -40,7 +40,7 @@ The server already reads Render's assigned `PORT` environment variable, falling 
 https://mediavault.onrender.com/api/health
 ```
 
-The response should report `ok: true`. Keep the Render service URL exactly as `https://mediavault.onrender.com`, or update the destination in `vercel.json` if Render assigns a different URL.
+The response should report `ok: true`. Keep the Render service URL exactly as `https://mediavault-8ue6.onrender.com`, or update the destination in `vercel.json` if Render assigns a different URL.
 
 ## Vercel Frontend
 
