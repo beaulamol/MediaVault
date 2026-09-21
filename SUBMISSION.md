@@ -18,7 +18,8 @@ Anything we need to know beyond `npm install && npm run dev`.
 
 ## Time spent
 
-Approx. 5 days elapsed since the initial commit; actual hands-on coding time was not tracked separately.
+Approximately 10–12 hours, mostly on Sunday, including preparing the submission.
+
 
 ---
 
