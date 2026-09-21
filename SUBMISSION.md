@@ -12,6 +12,7 @@ Paste your Loom (or equivalent) link here. 5–10 minutes.
 
 [Loom URL](https://www.loom.com/share/70103a8ff31a4e5b86952de6c7782be5)
 
+
 ## How to run it
 
 Anything we need to know beyond `npm install && npm run dev`.
@@ -28,35 +29,30 @@ Approximately 10–12 hours, mostly on Sunday, including preparing the submissio
 | #   | Defect                                                                     | Where                                    | Fixed / left / out of scope                                               |
 | --- | -------------------------------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------- |
 | 1   | Bulk update sends >50 ids in one call                                      | `src/pages/hooks/useBulkAssetStatus.ts`  | fixed                                                                     |
-| 2   | Search requests race and are not cancelled or debounced                    | `src/features/assets/hooks/useAssets.ts` | fixed in source; race test not run                                        |
+| 2   | Search requests race and are not cancelled or debounced                    | `src/features/assets/hooks/useAssets.ts` | fixed in source;tested                                     |
 | 3   | Identical list requests are not deduplicated                               | `src/api/client.ts`                      | fixed in source; concurrency test not run                                 |
-| 4   | Query state and filters are not in the URL                                 | `src/pages/AssetsPage.tsx`               | fixed for q/status/kind/tag/sort; Back/Forward not browser-tested         |
-| 5   | Cursor pagination and infinite scrolling are absent                        | `useAssets.ts`, `AssetGrid.tsx`          | fixed in source; browser scroll not run                                   |
-| 6   | Every loaded card is rendered and selection re-renders the grid            | `AssetGrid.tsx`                          | fixed with `react-window` and memoized cards;                             |
-| 7   | Loading, empty, and error states overlap                                   | `AssetContent.tsx`                       | fixed in source                                                           |
-| 8   | Bulk results, partial failures, and rollback are ignored                   | `useBulkAssetStatus.ts`                  | fixed in source; chaos-on 207 run not completed                           |
-| 9   | Retry, Retry-After, offline messaging, and structured errors are absent    | `client.ts`, `AssetsPage.tsx`            | fixed in source; network/offline run not completed                        |
-| 10  | Detail loads can race; version conflicts are not handled                   | `AssetDetail.tsx`                        | fixed in source; conflict flow not run                                    |
-| 11  | Missing thumbnails show broken images and are not lazy                     | `AssetGrid.tsx`, `AssetDetail.tsx`       | grid fixed; detail image fallback remains a gap                           |
-| 12  | Grid keyboard navigation and panel focus management are absent             | `AssetGrid.tsx`, `AssetDetail.tsx`       | implemented in source; browser/screen-reader verification pending         |
-| 13  | Successful detail edits do not reconcile the list                          | `AssetsPage.tsx`                         | fixed in source                                                           |
-| 14  | Paginated load errors can surface after a newer query                      | `useAssets.ts`                           | fixed during audit with generation guard                                  |
-| 15  | PATCH 500 retries ignored API retry safety                                 | `client.ts`                              | fixed during audit: only `write_failed` retries                           |
-| 16  | Batch fetch could exceed the API's 25-ID cap                               | `client.ts`                              | fixed during audit by chunking at 25; no current caller                   |
-| 17  | Default sort was being suppressed from URL/API and broke `updatedAt:desc`  | `AssetsPage.tsx`                         | fixed: the active sort is now always written to the URL and request state |
-| 18  | Keyboard focus could show duplicate blue outlines from grid wrapper + card | `AssetGrid.tsx`, `src/styles.css`        | fixed by keeping the visible focus ring on the card only                  |
+| 4   | Query state and filters are not in the URL                                 | `src/pages/AssetsPage.tsx`               | fixed for q/status/kind/tag/sort; Back/Forward test in my browser only         |
+| 5   | Cursor pagination and infinite scrolling are absent                        | `useAssets.ts`, `AssetGrid.tsx`          | fixed in source;                               |
+| 6   | Bulk select  option   missing                           |    `AssetGrid.tsx`                 | `useAssets.ts`, `AssetGrid.tsx`          | fixed in 
+| 7   | Loading, empty, and error states overlap                                   | `AssetContent.tsx`                       | fixed in source                                                           |                       |                   |                         |
+| 8  | Missing thumbnails show broken images and are not lazy                     | `AssetGrid.tsx`, `AssetDetail.tsx`       | grid fixed; detail image fallback remains a gap                           |
+| 9  | Grid keyboard navigation/shift selection and panel focus management are absent             | `AssetGrid.tsx`, `AssetDetail.tsx`,`AssetPage.tsx`       | implemented in source;          |
+| 10  | Successful detail edits do not reconcile the list                          | `AssetsPage.tsx`                         | fixed in source                                                           |
+| 11  | Responsiveness needs improvement.                         | `AssetGrid.tsx`                         | partialy fixed in source  
+| 12  | Labels are missing.                       | `Style.css`,`AssetGrid.tsx`                         |  fixed in source  
+| 13  | Toggling one card also re-renders other cards.                         | `AssetGrid.tsx`                         | partialy fixed in source  
+
+
 
 ---
 
 ## Pending / not yet verified
 
 - Browser-level keyboard pass still pending for full grid navigation, focus return, and screen-reader flow.
-- Network/offline behavior is intentionally not treated as a product issue because this app runs against the local seeded Node API with no external network dependency.
 - Concurrency tests are still pending for retries, aborts, and stale request handling.
 - Production performance measurements (DOM count, memory, long tasks, and scroll smoothness) were not captured in-browser.
 - Responsive/mobile layout issues remain unverified; narrow-window behavior and panel stacking were not fully checked.
 - The sort state is now consistent with the URL and API request, but the exact ordering behavior still depends on the backend response and should be verified in-browser.
-- Contrast and accessibility validation were not completed with a formal audit tool.
 
 ---
 
@@ -79,11 +75,12 @@ Search input is debounced for 300 ms. Query changes clear visible results immedi
 
 **Optimistic updates and rollback**
 
-Bulk IDs are chunked at 50 and processed with three workers. Successful per-item results are reconciled, failed items are restored individually, and retryable failures remain selected. Legal-hold failures are not automatically retried.
+Bulk updates are split into batches of up to 50 IDs, with three requests running at a time. Successful updates keep the data returned by the server, while failed items return to their previous state. Items that can be retried remain selected. Legal-hold failures are not retried automatically because the server blocks those changes.
+
 
 **Retry and backoff policy**
 
-The client retries at most three attempts for GET 503/429/network failures and PATCH `write_failed` 500 responses, with exponential jitter and `Retry-After` precedence. 400, 409, 422, other PATCH 500 codes, and cancellation are never retried. No data-fetching dependency was added; `react-window` is the only runtime addition.
+When the API returns `429`, the client treats it as temporary rate limiting, waits for the server's `Retry-After` delay, and retries within the attempt limit. If the service remains busy, the user sees a clear message asking them to try again shortly instead of the raw technical error.
 
 **State placement and URL sync**
 
@@ -97,11 +94,11 @@ Fill in real measurements, not estimates. Say which machine and browser.
 
 | Metric                                          | Before                 | After        | How measured                                                                      |
 | ----------------------------------------------- | ---------------------- | ------------ | --------------------------------------------------------------------------------- |
-| Rendered DOM nodes at 5,000 rows loaded         | not measured           | not measured | Browser measurement still required; implementation uses `FixedSizeGrid` windowing |
-| Cards re-rendered when toggling one selection   | not measured           | not measured | `Card` is memoized; no Profiler run available                                     |
+| Rendered DOM nodes at 5,000 rows loaded         | not measured           | not measured  | Profiled with 3,000 assets, but DOM nodes were not counted. The 5,000-asset check is pending. |
+| Cards re-rendered when toggling one selection   | not measured           | 1 card observed | `Card` is memoized;Tested with React DevTools Profiler.                                     |
 | Longest task during sustained scroll            | not measured           | not measured | No performance trace captured                                                     |
-| Requests fired while typing a 6-character query | not measured           | not measured | 300 ms debounce implemented; no Network recording captured                        |
-| Production bundle, gzipped                      | not freshly reproduced | 56.42 kB JS  | `npm run build`, current Vite output; includes `react-window`                     |
+| Requests fired while typing a 6-character query | not measured           | not measured | A 300 ms debounce is implemented; request count has not been recorded.                        |
+| Production bundle, gzipped                      | not freshly reproduced | 56.45 kB JS  | `npm run build`, current Vite output; includes `react-window`                     |
 
 What was the actual bottleneck, and how did you find it?
 
@@ -135,13 +132,13 @@ Screenshots in the repo are welcome — link them here.
 
 ## Trade-offs and cuts
 
-No automated test script exists. The integrated browser interaction was not completed in this audit, so DOM, memory, long-task, Network-panel, contrast, and screen-reader measurements remain explicitly unmeasured. Live SSE reconciliation and offline write queueing were not implemented; with another day I would add focused concurrency/rollback tests and complete a real browser accessibility/performance pass.
+No automated test script exists.Responsiveness partialy fixed not checked throughly.Image handling in detail page.
 
-See `ASSESSMENT_AUDIT.md` for the requirement-by-requirement status and evidence, and `VIDEO_PLAN.md` for a five-to-six-minute walkthrough plan.
+
 
 ## Critique of the API
 
-The API would benefit from a single bulk endpoint with an explicit idempotency key and a cursor replay contract. Query-bound opaque cursors force the client to discard pagination on every query change, while mixed 207 plus per-item conflict codes make mutation reconciliation more involved than a typed operation result would be.
+The API would be easier to use if bulk requests supported idempotency keys, so retries could not apply the same update twice. Pagination cursors are tied to the current query, so the client must discard them whenever a filter or sort changes. Bulk responses can also contain both successes and failures, which means the client must process each asset separately.
 
 ## Anything you would like us to look at
 
